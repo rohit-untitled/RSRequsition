@@ -1,0 +1,8 @@
+*.tgz
+spec
+service-*
+package/
+src
+tsconfig.json
+**/*.map
+!.npmignore

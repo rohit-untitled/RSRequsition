@@ -1,0 +1,84 @@
+{
+    "HRZ": {
+        "RequisitioningBU": null,
+        "PreparerId": "",
+        "PreparerEmail": null,
+        "Description" : "Description of product",
+        "ExternallyManagedFlag": false,
+        "Justification": "Justification",
+        "InterfaceSourceCode": "GSE3",
+        "lines" : [
+            {
+                "RequesterId": null,
+                "LineTypeCode": "Goods",
+                "CategoryId": 300000047312452,
+                "CategoryName": "Laptops",
+                "ItemDescription": "Item Description of product",
+                "Quantity": 1,
+                "CurrencyCode": null,
+                "UOMCode": "zzu",
+                "UOM": "EA",
+                "Price": 1000,
+                "RequestedDeliveryDate": null,
+                "DestinationTypeCode": "EXPENSE",
+                "DestinationType": "Expense",
+                "DestinationOrganizationId": null,
+                "DeliverToLocationId": null,
+                "NegotiationRequiredFlag": false,
+                "NegotiatedByPreparerFlag": true,
+                "SupplierContact" : null,
+                "Supplier" : null,
+                "SupplierSite" :null,
+                "distributions" : [
+                    {
+                        "Quantity": 1,
+                        "DistributionNumber": 1,
+                        "CurrencyAmount": null,
+                        "ChargeAccount": "000.301.1301.0000.000.0000.0000"
+                    }
+                ]
+                }
+        ]
+    
+    },
+    "HED": {
+        "RequisitioningBU": null,
+        "PreparerEmail": null,
+        "Description" : "Laptop 15\", Core i7, Windows 10, 16GB Memory, 500GB HD, Microsoft Office Professional",
+        "ExternallyManagedFlag": false,
+        "Justification": "Required for Job",
+        "InterfaceSourceCode": "GSE3",
+        "lines" : [
+            {
+                "RequesterId": null,
+                "LineTypeCode": "Goods",
+                "CategoryId": 300000022479187,
+                "CategoryName": "Laptops",
+                "ItemDescription": "Laptop 15\", Core i7, Windows 10, 16GB Memory, 500GB HD, Microsoft Office Professional",
+                "Quantity": 1,
+                "CurrencyCode": null,
+                "UOMCode": "zzy",
+                "UOM": "Ea",
+                "Price": null,
+                "RequestedDeliveryDate": null,
+                "DestinationTypeCode": "EXPENSE",
+                "DestinationType": "Expense",
+                "DestinationOrganizationId": null,
+                "DeliverToLocationCode": null,
+                "NegotiationRequiredFlag": false,
+                "NegotiatedByPreparerFlag": true,
+                "SupplierContact" : null,
+                "Supplier" : null,
+                "SupplierSite" :null,
+                "distributions" : [
+                    {
+                        "Quantity": 1,
+                        "DistributionNumber": 1,
+                        "CurrencyAmount": null
+                    }
+                ]
+                }
+        ]
+    
+    }
+}

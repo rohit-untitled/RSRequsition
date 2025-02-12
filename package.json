@@ -1,0 +1,61 @@
+{
+  "name": "laptop-procurement-cc",
+  "version": "3.0.2",
+  "description": "Procurement Custom Components",
+  "main": "main.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@oracle/bots-node-sdk": "^2.0.0",
+    "axios": "^0.20.0",
+    "bluebird": "^3.5.3",
+    "express": "^4.17.1",
+    "moment": "^2.28.0",
+    "moment-parseformat": "^3.0.0",
+    "request": "^2.88.2",
+    "save": "^2.4.0",
+    "sax": "^1.2.4",
+    "string-builder": "^0.1.6",
+    "strong-soap": "^1.22.1",
+    "xml2js": "^0.4.23",
+    "xmlbuilder": "^15.1.1"
+  },
+  "devDependencies": {
+    "@oracle/bots-node-sdk": "^2.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-jasmine": "^4.1.2",
+    "eslint-plugin-json": "^3.1.0"
+  },
+  "bundleDependencies": [
+    "@oracle/bots-node-sdk",
+    "axios",
+    "bluebird",
+    "express",
+    "moment",
+    "moment-parseformat",
+    "request",
+    "save",
+    "sax",
+    "string-builder",
+    "strong-soap",
+    "xml2js",
+    "xmlbuilder"
+  ],
+  "bundledDependencies": [
+    "@oracle/bots-node-sdk",
+    "axios",
+    "bluebird",
+    "express",
+    "moment",
+    "moment-parseformat",
+    "request",
+    "save",
+    "sax",
+    "string-builder",
+    "strong-soap",
+    "xml2js",
+    "xmlbuilder"
+  ]
+}

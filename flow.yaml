@@ -1,0 +1,302 @@
+main: true
+name: ItemCategory
+
+context:
+  variables:
+    iResult: "nlpresult"
+    categoryList: "string"
+    endpoint: "string" 
+    username: "string" 
+    password: "string" 
+    default_waitmessage: "string"
+    accs_domain: "string"
+    emailForProcurement: "string"
+    procurement_cardsRangeStart: "int"
+    inputQueryText: "string"
+    resolvedIntent: "string"
+
+defaultTransitions:
+  error: "defaulthandler"
+  
+states:
+# ==================================================================
+# GSE Employee Service - Dialog Flow Conversation States
+# =================================================================
+  setDefaultWaitMessage:
+    component: "System.SetVariable"
+    properties:
+      variable: "default_waitmessage"
+      value: "${rb('wait_msg')}"
+    transitions:
+      next: "setACCSDomain"
+
+  # Endpoint of image server
+  setACCSDomain:
+    component: "System.SetVariable"
+    properties:
+      variable: "accs_domain"
+      value: "${system.config.da.accsdomain}"
+    transitions:
+      next: "setEmailforProcurement_qs"
+  
+  setEmailforProcurement_qs:
+    component: "System.SetVariable"
+    properties:
+      variable: "emailForProcurement"
+      value: "may.gee_ecke@oracledemos.com"
+    transitions:
+      next: "setCardsRangeStart_procurement"   
+
+  setCardsRangeStart_procurement:
+    component: "System.SetVariable"
+    properties:
+      variable: "procurement_cardsRangeStart"
+      value: 0
+    transitions:
+      next: "setWebChannel"
+  
+  setWebChannel:
+    component: "System.SetVariable"
+    properties:
+      variable: "user.webChannel"
+      value: "${(system.channelType=='websdk')?then('true','false')}"  
+    transitions:
+      next: "removePunctuations"   
+     
+  removePunctuations:
+    component: "System.SetVariable"
+    properties:
+      variable: "inputQueryText"
+      value: "${system.message.messagePayload.text?remove_ending('?')?remove_ending('.')?remove_ending('!')}" 
+    transitions:
+      next: "assignInstancenameForWebChannel"
+   
+  # sets the instance name (e.g. evix-test)
+  assignInstancenameForWebChannel:
+    component: "System.SetVariable"
+    properties:
+      variable : "user.instanceName"
+      ###value : "${system.config.da.FARestEndPoint?keep_after('-')?keep_before('.')?keep_before_last('-')}"
+      value : "${system.config.da.fusionInstanceName}"
+    transitions:
+      next: "assignTokenTrue"
+      
+  # Before the start of authentication, this variable is set to false.
+  assignTokenTrue:
+    component: "System.SetVariable"
+    properties:
+      variable: "user.authFromToken"
+      value: "false"
+    transitions:
+      next: "intent"
+      
+# ==================================================================
+# GSE Procurement Service - Dialog Flow Conversation States
+# ==================================================================  
+    
+  intent:
+    component: "System.Intent"
+    properties:
+      variable: "iResult"
+      sourceVariable: "inputQueryText"
+    transitions:
+      actions:   
+        unresolvedIntent: "unresolved"
+      next: "verifyWebChannelAndAssignAccessToken"   
+      
+  #
+  # This checks if the channel is websdk in order to get the token and properties from web SDK  
+  #
+  verifyWebChannelAndAssignAccessToken:
+    component: "System.ConditionEquals"
+    properties:
+      variable: "user.webChannel"
+      value: "true"
+    transitions: 
+      actions:
+        equal: "assignAccessTokenForWebChannel"
+        notequal: "checkIDCSOAuthForFA"      
+      next: "checkIDCSOAuthForFA"
+  
+  # sets the access token
+  assignAccessTokenForWebChannel:
+    component: "System.SetVariable"
+    properties:
+      variable : "user.oAuthToken"
+      value : "${profile.properties.value.accessToken}"
+    transitions:
+      next: "assignUsernameForWebChannel"
+  
+  # Sets the username (e.g. rohit.ab.sharma@oracle.com)    
+  assignUsernameForWebChannel:
+    component: "System.SetVariable"
+    properties:
+      variable : "user.username"
+      value : "${profile.properties.value.principal}"
+    transitions:
+      next: "setAuthFromTokenTrue"
+  
+  # This state is reached after successful authentication. So, the value of user.authFromToken is set to true.
+  setAuthFromTokenTrue:
+    component: "System.SetVariable"
+    properties:
+      variable : "user.authFromToken"
+      value : "true"
+    transitions:
+      next: "assignIntentToVariable"
+
+  checkIDCSOAuthForFA:    
+    component: "System.ConditionEquals" 
+    properties: 
+      source: <#if "${system.security.configuredAuthenticationServices}"?contains("IDCS_OAuthForFA")>true<#else>false</#if>   
+      value: "true" 
+    transitions: 
+      actions: 
+        equal: "setauthFromToken"
+        notequal: "oAuthFail"
+  setauthFromToken:
+    component: "System.SetVariable"
+    properties:
+      variable : "user.authFromToken"
+      value : "true"
+    transitions:
+      next: "oauth2AccountLink"      
+
+  oauth2AccountLink:
+    component: "System.OAuth2AccountLink"
+    properties:
+      prompt: "${rb('getAccessTokenPrompt')}"
+      variable: "token"
+      authenticationService: "IDCS_OAuthForFA"
+      authenticatedUserVariableName: "user.username"
+      accessTokenVariableName: "user.oAuthToken"
+      linkLabel: "${rb('getAccessTokenLinkLabel')}"
+      cancelLabel: "${rb('getAccessTokenCancelLabel')}"
+    transitions:
+      actions:
+        pass: "assignIntentToVariable"
+        fail: "oAuthFail"
+        textReceived: "validateoAuth2Token"       
+      next: "resumeOriginalIntentFlow"
+      
+  validateoAuth2Token: 
+    component: "System.ConditionExists" 
+    properties: 
+      variable: "user.oAuthToken" 
+    transitions: 
+      actions: 
+        exists: "assignIntentToVariable" 
+        notexists: "oauth2AccountLink"    
+      next: "assignIntentToVariable"
+
+  # Standard message displayed on authentication failure.
+  oAuthFail:
+    component: "System.Output"
+    properties:
+      text: "${rb('oAuthFailText')}"
+      keepTurn: true
+    transitions:
+      return: "done"    
+      
+  # The iResult variable is used to determine the matching intent for the utterance.
+  assignIntentToVariable:
+    component: "System.SetVariable"
+    properties:
+      variable: "resolvedIntent"
+      value: "${iResult.value.intentMatches.summary[0].intent}"
+    transitions: 
+      next: "resumeOriginalIntentFlow"
+      
+  # This state sets the start state for each intent
+  resumeOriginalIntentFlow:
+    component: "System.Switch"
+    properties:
+      variable: "resolvedIntent"
+      values:
+      - "ExitFlow"
+      - "Cancel Order"
+      - "Create Requisition"
+    transitions:
+      actions:
+        ExitFlow: "exitFlow"        
+        Cancel Order: "cancelOrder"
+        Create New Requisition: "getItemCategories"
+        NONE: "unresolved"
+      next: "getItemCategories"
+       
+  # default error handler
+  defaulthandler:
+    component: "System.Output"
+    properties:
+      text: "${rb('error_handler')}"
+    transitions:
+      next: "resetVariables" 
+  
+  resetVariables:
+    component: "System.ResetVariables"
+    properties:
+      variableList: "askChoice,yesnomore,selectedLaptop,yesnorecommend"
+    transitions:
+      next: "intent"
+
+  getItemCategories:
+    component: "Requisition"
+    properties:
+      instanceName : "${system.config.da.FARestEndPoint}/fscmRestApi/resources/11.13.18.05/itemCategoryAssignments"
+      requestToken: "${user.oAuthToken}"
+      userName: "${user.username}"
+      fusionEnv: "${system.config.da.fusionType}"    
+    transitions:
+      actions:
+        success: "saveCategoryList"
+        error: "showError"
+
+  saveCategoryList:
+    component: "System.SetVariable"
+    properties:
+      variable: "categoryList"
+      value: "${GetItemCategories.response}"
+    transitions:
+      next: "displayCategoryList"
+
+  displayCategoryList:
+    component: "System.Output"
+    properties:
+      text: "${categoryList}"
+      keepTurn: false
+    transitions:
+      return: "done"
+
+  showError:
+    component: "System.Output"
+    properties:
+      text: "An error occurred while retrieving the item categories."
+      keepTurn: false
+    transitions:
+      return: "done"
+
+  
+  # Cancel Order flow
+  cancelOrder:
+    component: "System.Output"
+    properties:
+      text: "${rb('cancelOrder')}"
+    transitions:
+      return: "done"
+      
+# ==================================================================
+# COMMON Dialog Flow Conversation States
+# ==================================================================
+  unresolved:
+    component: "System.Output"
+    properties:
+      text: "${rb('unresolvedText')}"
+    transitions:
+      return: "done"
+      
+  exitFlow:
+    component: "System.Output"
+    properties:
+      text: "${rb('exitFlowText')}"
+    transitions:
+      return: "done"              
