@@ -19,6 +19,8 @@ context:
     procurement_cardsRangeStart: "int"
     inputQueryText: "string"
     resolvedIntent: "string"
+    justification: "string"
+    requisitionNumber: "string"
 
 defaultTransitions:
   error: "defaulthandler"
@@ -335,7 +337,7 @@ states:
           name: "ItemsCards"
           cards:
           - title: "${AllItems.name}"
-            description: "${AllItems.description}"
+            description: "${AllItems.description} - Price: $${AllItems.price?string?default('50')}"
             name: "ItemCard"
             iteratorVariable: "AllItems"
             rangeStart: "${procurement_cardsRangeStart}"
@@ -349,27 +351,147 @@ states:
                 variables:
                   selectedItem: "${AllItems.name}"
                   selectedItemDesc: "${AllItems.description}"
-                  selectedItemPrice: "${AllItems.price}"
+                  selectedItemPrice: "${AllItems.price?string?default('50')}"
               name: "select"             
     transitions:
       actions:
         confirmSelection: "confirmSelection"
       next: "intent"
 
-
-
   confirmSelection:
+    component: "System.CommonResponse"
+    properties:
+      processUserMessage: true
+      keepTurn: false
+      metadata:
+        responseItems:
+        - type: "text"
+          text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed?"
+          actions:
+          - label: "${rb('yesLabel')}"
+            type: "postback"
+            payload:
+              action: "yescontinue"
+              variables:
+                yescontinue: "yes"
+          - label: "${rb('noLabel')}"
+            type: "postback"
+            payload:
+              action: "nostop"
+              variables:
+                nostop: "no"
+    transitions:
+      actions:
+        yescontinue: "showRequisitionPretext"
+        nostop: "cancelProcurement"
+      next: "showRequisitionPretext"
+  
+  showRequisitionPretext:
     component: "System.Output"
     properties:
-      text: "You selected ${selectedItem}. Would you like to proceed?"
+      text: "${rb('wait_msg')}"
+      keepTurn: true
+    transitions:
+      next: "askRequisition"
+
+  # Asks if the user wants to create a new requisition
+  askRequisition:
+    component: "System.CommonResponse"
+    properties:
+      processUserMessage: true
+      keepTurn: false
+      metadata: 
+        responseItems:         
+        - type: "text"  
+          text: "${rb('askRequisition')}"   
+          actions:
+          - label: "${rb('yesLabel')}"
+            type: "postback"
+            payload:
+              action: "yesrequisition"
+              variables:
+                askRequisition: "yes"
+          - label: "${rb('noLabel')}"
+            type: "postback"
+            payload:
+              action: "norequisition"    
+              variables:
+                askRequisition: "no"      
+    transitions:
+      actions:
+        yesrequisition: "askJustification"
+        norequisition: "cancelOrder"    
+      # next: "selectRequisitionPretext"
+
+  # Give justification for the laptop requisition
+  askJustification:
+    component: "System.Text"
+    properties:
+      prompt: "${rb('askJustification')}"
+      variable: "justification"
+    transitions:
+      next: "selectRequisitionPretext"
+
+  # Default message to before creating a requisition
+  selectRequisitionPretext:
+    component: "System.Output"
+    properties:
+      text: "${rb('createRequisition')}"
+      keepTurn: true
+    transitions:
+      next: "selectRequisition"
+
+  # Creates requisition by invoking custom component
+  selectRequisition:
+    component: "ItemRequisition"
+    properties:
+      instanceName: "${system.config.da.FARestEndPoint}/fscmService/PurchaseRequestService?wsdl"
+      requestToken: "${user.oAuthToken}"
+      userName: "${user.username}"
+      selectedItem: "${selectedItem}"
+      justification: "${justification}"
+      selectedItemDesc: "${selectedItemDesc}"
+      selectedItemPrice: "${selectedItemPrice}" 
+      fusionEnv: "${system.config.da.fusionType}"
+    transitions:
+      actions:
+        done_procurement: "showRequisition"
+        resetVariables: "requisitionFailed"
+        notSupported: "notSupported"
+      next: "intent"
+
+  notSupported:
+   component: "System.Output"
+   properties:
+     text: "${rb('unsupportedEnv')}"
+   transitions:
+     return: "done"
+
+  showRequisition:
+    component: "System.CommonResponse"
+    properties:
+      metadata:
+        responseItems:
+        - type: "text"
+          text: "${rb('successRequisition',requisitionNumber,selectedItem)}"
+      processUserMessage: false
+      keepTurn: true
+    transitions:
+      next: "done_procurement"
+
+  # Message on requisition failed
+  requisitionFailed:
+    component: "System.Output"
+    properties:
+      text: "${rb('requisitionFailedMessage')}"
     transitions:
       return: "done"
 
-
-  processCategory:
+  # Message on flow completion
+  done_procurement:
     component: "System.Output"
     properties:
-      text: "You selected category: ${selectedCategory}"
+      text: "${rb('thanks_msg')}"
     transitions:
       return: "done"
 
@@ -381,6 +503,13 @@ states:
     transitions:
       return: "done"
 
+  # Message displayed on cancellation of order
+  cancelProcurement:
+    component: "System.Output"
+    properties:
+      text: "${rb('cancelProcurement')}"
+    transitions:
+      return: "done"
   
   # Cancel Order flow
   cancelOrder:

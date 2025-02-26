@@ -19,6 +19,7 @@ context:
     procurement_cardsRangeStart: "int"
     inputQueryText: "string"
     resolvedIntent: "string"
+    justification: "string"
 
 defaultTransitions:
   error: "defaulthandler"
@@ -335,7 +336,7 @@ states:
           name: "ItemsCards"
           cards:
           - title: "${AllItems.name}"
-            description: "${AllItems.description}"
+            description: "${AllItems.description} - Price: $${AllItems.price?string?default('50')}"
             name: "ItemCard"
             iteratorVariable: "AllItems"
             rangeStart: "${procurement_cardsRangeStart}"
@@ -349,25 +350,100 @@ states:
                 variables:
                   selectedItem: "${AllItems.name}"
                   selectedItemDesc: "${AllItems.description}"
-                  selectedItemPrice: "${AllItems.price}"
+                  selectedItemPrice: "${AllItems.price?string?default('50')}"
               name: "select"             
     transitions:
       actions:
         confirmSelection: "confirmSelection"
       next: "intent"
 
+  # confirmSelection:
+  #   component: "System.Output"
+  #   properties:
+  #     text: "You selected ${selectedItem}. Would you like to proceed?"
+  #   transitions:
+  #     return: "done"
+
   confirmSelection:
-    component: "System.Output"
+    component: "System.CommonResponse"
     properties:
-      text: "You selected ${selectedItem}. Would you like to proceed?"
+      processUserMessage: true
+      keepTurn: false
+      metadata:
+        responseItems:
+        - type: "text"
+          text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed?"
+          actions:
+          - label: "${rb('yesLabel')}"
+            type: "postback"
+            payload:
+              action: "yescontinue"
+              variables:
+                yescontinue: "yes"
+          - label: "${rb('noLabel')}"
+            type: "postback"
+            payload:
+              action: "nostop"
+              variables:
+                nostop: "no"
     transitions:
-      return: "done"
-
-
-  processCategory:
+      actions:
+        yescontinue: "showRequisitionPretext"
+        nostop: "cancelProcurement"
+      next: "showRequisitionPretext"
+  
+  showRequisitionPretext:
     component: "System.Output"
     properties:
-      text: "You selected category: ${selectedCategory}"
+      text: "${rb('wait_msg')}"
+      keepTurn: true
+    transitions:
+      next: "askRequisition"
+
+  # Asks if the user wants to create a new requisition
+  askRequisition:
+    component: "System.CommonResponse"
+    properties:
+      processUserMessage: true
+      keepTurn: false
+      metadata: 
+        responseItems:         
+        - type: "text"  
+          text: "${rb('askRequisition')}"   
+          actions:
+          - label: "${rb('yesLabel')}"
+            type: "postback"
+            payload:
+              action: "yesrequisition"
+              variables:
+                askRequisition: "yes"
+          - label: "${rb('noLabel')}"
+            type: "postback"
+            payload:
+              action: "norequisition"    
+              variables:
+                askRequisition: "no"      
+    transitions:
+      actions:
+        yesrequisition: "askJustification"
+        norequisition: "cancelOrder"    
+      # next: "selectRequisitionPretext"
+
+  # Give justification for the laptop requisition
+  askJustification:
+    component: "System.Text"
+    properties:
+      prompt: "${rb('askJustification')}"
+      variable: "justification"
+    transitions:
+      next: "selectRequisitionPretext"
+
+  # Default message to before creating a requisition
+  selectRequisitionPretext:
+    component: "System.Output"
+    properties:
+      text: "${rb('createRequisition')}"
+      keepTurn: true
     transitions:
       return: "done"
 
@@ -379,6 +455,13 @@ states:
     transitions:
       return: "done"
 
+  # Message displayed on cancellation of order
+  cancelProcurement:
+    component: "System.Output"
+    properties:
+      text: "${rb('cancelProcurement')}"
+    transitions:
+      return: "done"
   
   # Cancel Order flow
   cancelOrder:

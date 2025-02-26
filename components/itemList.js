@@ -52,9 +52,10 @@ module.exports = {
       const itemList = data.items.map(item => ({
         name: item.Item || "Unknown Item",
         description: item.ItemDescription || "No description available",
-        price: item.Price || "50",
-      }));
+        price: item.Price ? String(item.Price) : "50",
 
+      }));
+      console.log("Final itemList:", JSON.stringify(itemList, null, 2));
       conversation.variable('AllItems', itemList);
       conversation.transition('success');
     } catch (error) {
@@ -65,4 +66,3 @@ module.exports = {
     }
   }
 };
-

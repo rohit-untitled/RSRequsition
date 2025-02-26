@@ -1,9 +1,7 @@
-var callProcurementAPIs = require("../lib/callProcurementAPIs.js");
-
 module.exports = {
     metadata: function metadata() {
         return {
-            name: "Requisition",
+            name: "ItemRequisition",
             properties: {
                 instanceName: {
                     type: "string",
@@ -17,10 +15,26 @@ module.exports = {
                     type: "string",
                     required: true
                 },
-                fusionEnv: {
+                selectedItem: {
                     type: "string",
                     required: true
-                }
+                },
+                selectedItemDesc: {
+                    type: "string",
+                    required: true
+                },
+                selectedItemPrice: {
+                    type: "string",
+                    required: true
+                },
+                justification: {
+                    type: "string",
+                    required: true
+                },
+                fusionEnv: {
+                    type:"string",
+                    required: true
+                },
             },
             supportedActions: ["done_procurement", "resetVariables", "notSupported"]
         };
@@ -31,27 +45,35 @@ module.exports = {
         var userName = conversation.properties().userName;
         var requestToken = conversation.properties().requestToken;
         var fusionEnv = conversation.properties().fusionEnv.toUpperCase();
+        var selectedItem = conversation.properties().selectedItem;
+        var selectedItemDesc = conversation.properties().selectedItemDesc;
+        var selectedItemPrice = conversation.properties().selectedItemPrice;
+        var justification = conversation.properties().justification;
 
         conversation.logger().info(
             "Instance name ==>" + instanceName,
             "Username ==>" + userName,
             "Request Token ==>" + requestToken,
-            "Fusion Env ==>" + fusionEnv
-          );
-
+            "Fusion Env ==>" + fusionEnv,
+            "Item ==>" + selectedItem,
+            "Description ==>" + selectedItemDesc,
+            "Amount ==>" + selectedItemPrice,
+            "Justification ==>" + justification,
+        );
+    
         var queryObject = {};
         queryObject.instanceName = instanceName;
         queryObject.requestToken = requestToken;
 
-        if (fusionEnv.includes('HRZ') || fusionEnv.includes('HED')) {
+        if(fusionEnv.includes('HRZ') || fusionEnv.includes('HED')){
             conversation.logger().info('Valid Environment', fusionEnv)
-        } else {
-            conversation.logger().info('Invalid Environment', fusionEnv)
+        }else{
+            conversation.logger().info('InvalidEnvironment', fusionEnv)
             conversation.keepTurn(true);
             conversation.transition("notSupported");
             done();
             return;
         }
-        callProcurementAPIs.procurementCBAPI(instanceName, userName, requestToken, fusionEnv, conversation, done);
     }
-};
+
+}
