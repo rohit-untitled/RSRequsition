@@ -1,6 +1,6 @@
 {
     "HRZ": {
-        "RequisitioningBU": null,
+        "RequisitioningBU": "USA Business Unit1",
         "PreparerId": "",
         "PreparerEmail": null,
         "Description" : "Description of product",
@@ -12,7 +12,7 @@
                 "RequesterId": null,
                 "LineTypeCode": "Goods",
                 "CategoryId": 300000047312452,
-                "CategoryName": "Laptops",
+                "CategoryName": "CategoryName",
                 "ItemDescription": "Item Description of product",
                 "Quantity": 1,
                 "CurrencyCode": null,

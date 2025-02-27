@@ -9,9 +9,9 @@ context:
     selectedItemDesc: "string"  
     selectedItemPrice: "string"
     CatId: "string"
+    CatName: "string"
     categoryList: "list"
     endpoint: "string" 
-    username: "string" 
     password: "string" 
     default_waitmessage: "string"
     accs_domain: "string"
@@ -21,6 +21,7 @@ context:
     resolvedIntent: "string"
     justification: "string"
     requisitionNumber: "string"
+    categoryStartIndex: "string"
 
 defaultTransitions:
   error: "defaulthandler"
@@ -266,14 +267,6 @@ states:
     transitions:
       next: "displayCategoryList"
 
-  # displayCategoryList:
-  #   component: "System.Output"
-  #   properties:
-  #     text: "${categoryList}"
-  #     keepTurn: true
-  #   transitions:
-  #     next: "getCategoryd"
-
   displayCategoryList:
       component: "System.CommonResponse"
       properties:
@@ -300,18 +293,28 @@ states:
                         action: "getCategoryd"
                         variables:
                           CatId: "${categoryList.CategoryName}"
+                          CatName: "${categoryList.CategoryId}"
       transitions:
         actions:
           getCategoryd: "getCategoryd"
         next: "intent"
 
   getCategoryd:
-      component: "System.SetVariable"
-      properties:
-        variable: "CatId"
-        value: "${CatId}"
-      transitions:
-        next: "getCatDetails"
+    component: "System.SetVariable"
+    properties:
+      variable: "CatId"
+      value: "${CatId}"
+    transitions:
+      next: "saveCategoryDetails"
+
+  saveCategoryDetails:
+    component: "System.SetVariable"
+    properties:
+      variable: "CatName"
+      value: "${CatName}"
+    transitions:
+      next: "getCatDetails"
+
 
   getCatDetails:
     component: "ListItems"
@@ -453,6 +456,8 @@ states:
       selectedItemDesc: "${selectedItemDesc}"
       selectedItemPrice: "${selectedItemPrice}" 
       fusionEnv: "${system.config.da.fusionType}"
+      CategoryId: "${CatId}"
+      CategoryName: "${CatName}"
     transitions:
       actions:
         done_procurement: "showRequisition"

@@ -9,9 +9,9 @@ context:
     selectedItemDesc: "string"  
     selectedItemPrice: "string"
     CatId: "string"
+    CatName: "string"
     categoryList: "list"
     endpoint: "string" 
-    username: "string" 
     password: "string" 
     default_waitmessage: "string"
     accs_domain: "string"
@@ -20,6 +20,8 @@ context:
     inputQueryText: "string"
     resolvedIntent: "string"
     justification: "string"
+    requisitionNumber: "string"
+    categoryStartIndex: 0
 
 defaultTransitions:
   error: "defaulthandler"
@@ -265,14 +267,6 @@ states:
     transitions:
       next: "displayCategoryList"
 
-  # displayCategoryList:
-  #   component: "System.Output"
-  #   properties:
-  #     text: "${categoryList}"
-  #     keepTurn: true
-  #   transitions:
-  #     next: "getCategoryd"
-
   displayCategoryList:
       component: "System.CommonResponse"
       properties:
@@ -299,18 +293,27 @@ states:
                         action: "getCategoryd"
                         variables:
                           CatId: "${categoryList.CategoryName}"
+                          CatName: "${categoryList.CategoryId}"
       transitions:
         actions:
           getCategoryd: "getCategoryd"
         next: "intent"
 
   getCategoryd:
-      component: "System.SetVariable"
-      properties:
-        variable: "CatId"
-        value: "${CatId}"
-      transitions:
-        next: "getCatDetails"
+    component: "System.SetVariable"
+    properties:
+      variable: "CatId"
+      value: "${CatId}"
+    transitions:
+      next: "saveCategoryDetails"
+
+  saveCategoryDetails:
+    component: "System.SetVariable"
+    properties:
+      variable: "CatName"
+      value: "${CatName}"
+    transitions:
+      next: "getCatDetails"
 
   getCatDetails:
     component: "ListItems"
@@ -356,13 +359,6 @@ states:
       actions:
         confirmSelection: "confirmSelection"
       next: "intent"
-
-  # confirmSelection:
-  #   component: "System.Output"
-  #   properties:
-  #     text: "You selected ${selectedItem}. Would you like to proceed?"
-  #   transitions:
-  #     return: "done"
 
   confirmSelection:
     component: "System.CommonResponse"
@@ -444,6 +440,62 @@ states:
     properties:
       text: "${rb('createRequisition')}"
       keepTurn: true
+    transitions:
+      next: "selectRequisition"
+
+  # Creates requisition by invoking custom component
+  selectRequisition:
+    component: "ItemRequisition"
+    properties:
+      instanceName: "${system.config.da.FARestEndPoint}/fscmService/PurchaseRequestService?wsdl"
+      requestToken: "${user.oAuthToken}"
+      userName: "${user.username}"
+      selectedItem: "${selectedItem}"
+      justification: "${justification}"
+      selectedItemDesc: "${selectedItemDesc}"
+      selectedItemPrice: "${selectedItemPrice}" 
+      fusionEnv: "${system.config.da.fusionType}"
+      CategoryId: "${CatId}"
+      CategoryName: "${CatName}"
+    transitions:
+      actions:
+        done_procurement: "showRequisition"
+        resetVariables: "requisitionFailed"
+        notSupported: "notSupported"
+      next: "intent"
+
+  notSupported:
+   component: "System.Output"
+   properties:
+     text: "${rb('unsupportedEnv')}"
+   transitions:
+     return: "done"
+
+  showRequisition:
+    component: "System.CommonResponse"
+    properties:
+      metadata:
+        responseItems:
+        - type: "text"
+          text: "${rb('successRequisition',requisitionNumber,selectedItem)}"
+      processUserMessage: false
+      keepTurn: true
+    transitions:
+      next: "done_procurement"
+
+  # Message on requisition failed
+  requisitionFailed:
+    component: "System.Output"
+    properties:
+      text: "${rb('requisitionFailedMessage')}"
+    transitions:
+      return: "done"
+
+  # Message on flow completion
+  done_procurement:
+    component: "System.Output"
+    properties:
+      text: "${rb('thanks_msg')}"
     transitions:
       return: "done"
 

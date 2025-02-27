@@ -1,3 +1,4 @@
+var callRequisitionAPIs = require("../lib/callRequisitionAPIs");
 module.exports = {
     metadata: function metadata() {
         return {
@@ -31,6 +32,14 @@ module.exports = {
                     type: "string",
                     required: true
                 },
+                CategoryId: {
+                    type: "string",
+                    required: true
+                },
+                CategoryName: {
+                    type: "string",
+                    required: true
+                },
                 fusionEnv: {
                     type:"string",
                     required: true
@@ -49,16 +58,21 @@ module.exports = {
         var selectedItemDesc = conversation.properties().selectedItemDesc;
         var selectedItemPrice = conversation.properties().selectedItemPrice;
         var justification = conversation.properties().justification;
+        var categoryId = conversation.properties().CategoryId;
+        var categoryName = conversation.properties().CategoryName;
+    
 
         conversation.logger().info(
             "Instance name ==>" + instanceName,
             "Username ==>" + userName,
-            "Request Token ==>" + requestToken,
+            // "Request Token ==>" + requestToken,
             "Fusion Env ==>" + fusionEnv,
             "Item ==>" + selectedItem,
             "Description ==>" + selectedItemDesc,
             "Amount ==>" + selectedItemPrice,
             "Justification ==>" + justification,
+            "CategoryId ==>" + categoryId,
+            "CategoryName ==>" + categoryName,
         );
     
         var queryObject = {};
@@ -72,8 +86,8 @@ module.exports = {
             conversation.keepTurn(true);
             conversation.transition("notSupported");
             done();
-            return;
         }
+        callRequisitionAPIs.requisitionAPI(instanceName, userName, requestToken, fusionEnv, selectedItemDesc, selectedItemPrice, justification, conversation, done);
     }
 
 }
