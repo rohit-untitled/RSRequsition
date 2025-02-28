@@ -87,7 +87,7 @@ module.exports = {
             conversation.transition("notSupported");
             done();
         }
-        callRequisitionAPIs.requisitionAPI(instanceName, userName, requestToken, fusionEnv, selectedItemDesc, selectedItemPrice, justification, conversation, done);
+        callRequisitionAPIs.requisitionAPI(instanceName, userName, requestToken, fusionEnv,categoryId,categoryName, selectedItem, selectedItemDesc, selectedItemPrice, justification, conversation, done);
     }
 
 }
