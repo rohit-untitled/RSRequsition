@@ -284,7 +284,7 @@ states:
                   name: "CategoryCard"
                   iteratorVariable: "categoryList"
                   rangeStart: "0"
-                  rangeSize: "5"
+                  rangeSize: "30"
                   actions:
                     - label: "Select"
                       type: "postback"
@@ -344,7 +344,7 @@ states:
             name: "ItemCard"
             iteratorVariable: "AllItems"
             rangeStart: "${procurement_cardsRangeStart}"
-            rangeSize: "5"
+            rangeSize: "35"
             actions:
             - label: "Select"
               type: "postback"
@@ -478,7 +478,7 @@ states:
       metadata:
         responseItems:
         - type: "text"
-          text: "${rb('successRequisition',requisitionNumber,selectedItem)}"
+          text: "${rb('successRequisition', requisitionNumber, selectedItem)}\n\n<a href='${requisitionUrl}' target='_blank'>View Details</a>"
       processUserMessage: false
       keepTurn: true
     transitions:
