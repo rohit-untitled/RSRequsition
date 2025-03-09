@@ -22,6 +22,8 @@ context:
     justification: "string"
     requisitionNumber: "string"
     categoryStartIndex: "string"
+    urlAvailable: "boolean"
+    requisitionUrl: "string" 
 
 defaultTransitions:
   error: "defaulthandler"
@@ -274,7 +276,7 @@ states:
         metadata:
           responseItems:
             - type: "text"
-              text: "Please select a category:"
+              text: "Please select a category you want to browse:"
             - type: "cards"
               cardLayout: "horizontal"
               name: "CategoryCards"
@@ -369,7 +371,7 @@ states:
       metadata:
         responseItems:
         - type: "text"
-          text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed?"
+          text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed to Order?"
           actions:
           - label: "${rb('yesLabel')}"
             type: "postback"
@@ -386,7 +388,7 @@ states:
     transitions:
       actions:
         yescontinue: "showRequisitionPretext"
-        nostop: "cancelProcurement"
+        nostop: "getItemCategories"
       next: "showRequisitionPretext"
   
   showRequisitionPretext:
@@ -422,9 +424,36 @@ states:
                 askRequisition: "no"      
     transitions:
       actions:
-        yesrequisition: "askJustification"
+        yesrequisition: "askJustificationOpt"
         norequisition: "cancelOrder"    
-      # next: "selectRequisitionPretext"
+
+  # Ask if the user wants to provide justification
+  askJustificationOpt:
+      component: "System.CommonResponse"
+      properties:
+        processUserMessage: true
+        keepTurn: false
+        metadata: 
+          responseItems:         
+          - type: "text"  
+            text: "${rb('askJustificationOpt')}"   
+            actions:
+            - label: "${rb('yesLabel')}"
+              type: "postback"
+              payload:
+                action: "yesJustification"
+                variables:
+                  provideJustification: "yes"
+            - label: "${rb('noLabel')}"
+              type: "postback"
+              payload:
+                action: "noJustification"    
+                variables:
+                  provideJustification: "no"      
+      transitions:
+        actions:
+          yesJustification: "askJustification"
+          noJustification: "selectRequisitionPretext"
 
   # Give justification for the laptop requisition
   askJustification:
@@ -478,11 +507,24 @@ states:
       metadata:
         responseItems:
         - type: "text"
-          text: "${rb('successRequisition', requisitionNumber, selectedItem)}\n\n<a href='${requisitionUrl}' target='_blank'>View Details</a>"
+          text: "${rb('successRequisition', requisitionNumber, selectedItem)}"
+      processUserMessage: false
+      keepTurn: true
+    transitions:
+      next: "showRequisitionDetails"
+
+  showRequisitionDetails:
+    component: "System.CommonResponse"
+    properties:
+      metadata:
+        responseItems:
+        - type: "text"
+          text: "Click below to get the details of your order\n\n<a href='${requisitionUrl}' target='_blank'>View Details</a>"
       processUserMessage: false
       keepTurn: true
     transitions:
       next: "done_procurement"
+
 
   # Message on requisition failed
   requisitionFailed:
