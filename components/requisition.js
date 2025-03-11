@@ -20,6 +20,10 @@ module.exports = {
                 fusionEnv: {
                     type: "string",
                     required: true
+                },
+                action: {   
+                    type: "string",
+                    required: false
                 }
             },
             supportedActions: ["done_procurement", "resetVariables", "notSupported"]
@@ -31,12 +35,14 @@ module.exports = {
         var userName = conversation.properties().userName;
         var requestToken = conversation.properties().requestToken;
         var fusionEnv = conversation.properties().fusionEnv.toUpperCase();
+        var action = conversation.properties().action;
 
         conversation.logger().info(
             "Instance name ==>" + instanceName,
             "Username ==>" + userName,
             "Request Token ==>" + requestToken,
-            "Fusion Env ==>" + fusionEnv
+            "Fusion Env ==>" + fusionEnv,
+            "Action ==> " + action
           );
 
         var queryObject = {};
@@ -52,6 +58,6 @@ module.exports = {
             done();
             return;
         }
-        callProcurementAPIs.procurementCBAPI(instanceName, userName, requestToken, fusionEnv, conversation, done);
+        callProcurementAPIs.procurementCBAPI(instanceName, userName, requestToken, fusionEnv, action, conversation, done);
     }
 };
