@@ -34,6 +34,7 @@
     "axios",
     "bluebird",
     "express",
+    "log4js",
     "moment",
     "moment-parseformat",
     "request",
