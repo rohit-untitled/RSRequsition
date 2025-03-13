@@ -11,6 +11,7 @@ context:
     CatId: "string"
     CatName: "string"
     categoryList: "list"
+    itemLists: "list"
     endpoint: "string" 
     default_waitmessage: "string"
     accs_domain: "string"
@@ -24,7 +25,9 @@ context:
     urlAvailable: "boolean"
     requisitionUrl: "string" 
     categoryIndex: "int" 
+    itemIndex: "int"
     fullCategoryList: "list"
+    fullItemList: "list"
 
 defaultTransitions:
   error: "defaulthandler"
@@ -377,10 +380,10 @@ states:
       fusionEnv: "${system.config.da.fusionType}" 
       catId: "${CatId}"
     transitions:
-      next: "displayCatDetails"
+      next: "displayItemList"
       error: "showError"
 
-  # displayCatDetails:
+  # displayItemList:
   #   component: "System.CommonResponse"
   #   properties:
   #     processUserMessage: true    
@@ -414,7 +417,7 @@ states:
   #       confirmSelection: "confirmSelection"
   #     next: "intent"
 
-  displayCatDetails:
+  displayItemList:
       component: "System.CommonResponse"
       properties:
         processUserMessage: true    
@@ -426,20 +429,20 @@ states:
               cardLayout: "horizontal"
               name: "ItemsCards"
               cards:
-                - title: "${AllItems.name}"
-                  description: "${AllItems.description} - Price: $${AllItems.price?string?default('50')}"
+                - title: "${itemLists.name}"
+                  description: "${itemLists.description} - Price: $${itemLists.price?string?default('50')}"
                   name: "ItemCard"
-                  iteratorVariable: "AllItems"
+                  iteratorVariable: "itemLists"
                   actions:
                     - label: "Select"
                       type: "postback"
-                      keyword: "${AllItems.name?lower_case}"
+                      keyword: "${itemLists.name?lower_case}"
                       payload:
                         action: "confirmSelection"
                         variables:
-                          selectedItem: "${AllItems.name}"
-                          selectedItemDesc: "${AllItems.description}"
-                          selectedItemPrice: "${AllItems.price?string?default('50')}"
+                          selectedItem: "${itemLists.name}"
+                          selectedItemDesc: "${itemLists.description}"
+                          selectedItemPrice: "${itemLists.price?string?default('50')}"
             - type: "text"
               text: "**Options:**\n⬅️ Click 'Previous' to go back\n➡️ Click 'Next' to see more items\n📜 Click 'Show All' to view all items"
               actions: 
@@ -471,7 +474,7 @@ states:
       userName: "${user.username}"   
       fusionEnv: "${system.config.da.fusionType}" 
     transitions:
-      next: "displayCatDetails"
+      next: "displayItemList"
 
   getPreviousItem:
     component: "ListItems"
@@ -482,7 +485,7 @@ states:
       userName: "${user.username}"    
       fusionEnv: "${system.config.da.fusionType}" 
     transitions:
-      next: "displayCatDetails"
+      next: "displayItemList"
 
   getAllItem:
     component: "ListItems"
@@ -493,7 +496,7 @@ states:
       userName: "${user.username}"   
       fusionEnv: "${system.config.da.fusionType}" 
     transitions:
-      next: "displayCatDetails"
+      next: "displayItemList"
 
   confirmSelection:
     component: "System.CommonResponse"
