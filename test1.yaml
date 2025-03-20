@@ -498,6 +498,34 @@ states:
     transitions:
       next: "displayItemList"
 
+  # confirmSelection:
+  #   component: "System.CommonResponse"
+  #   properties:
+  #     processUserMessage: true
+  #     keepTurn: false
+  #     metadata:
+  #       responseItems:
+  #       - type: "text"
+  #         text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed to Order?"
+  #         actions:
+  #         - label: "${rb('yesLabel')}"
+  #           type: "postback"
+  #           payload:
+  #             action: "yescontinue"
+  #             variables:
+  #               yescontinue: "yes"
+  #         - label: "${rb('noLabel')}"
+  #           type: "postback"
+  #           payload:
+  #             action: "nostop"
+  #             variables:
+  #               nostop: "no"
+  #   transitions:
+  #     actions:
+  #       yescontinue: "showRequisitionPretext"
+  #       nostop: "getItemCategories"
+  #     next: "showRequisitionPretext"
+
   confirmSelection:
     component: "System.CommonResponse"
     properties:
@@ -505,21 +533,30 @@ states:
       keepTurn: false
       metadata:
         responseItems:
-        - type: "text"
-          text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed to Order?"
-          actions:
-          - label: "${rb('yesLabel')}"
-            type: "postback"
-            payload:
-              action: "yescontinue"
-              variables:
-                yescontinue: "yes"
-          - label: "${rb('noLabel')}"
-            type: "postback"
-            payload:
-              action: "nostop"
-              variables:
-                nostop: "no"
+        - type: "cards"
+          cardLayout: "vertical" 
+          cards:
+            - title: "${selectedItem}"
+              description: |-
+
+                           ${rb('confirmRequisition.text')}
+
+                           ${selectedItemDesc}
+                           ${rb('confirmRequisition.itemQuantity.text')}: 1
+                           ${rb('cat.requester')}: ${user.username} 
+              actions:
+              - label: "${rb('confirmRequisition.actions.createRequisition.label')}"
+                type: "postback"
+                payload:
+                  action: "yescontinue"
+                  variables:
+                    yescontinue: "yes"
+              - label: "${rb('confirmRequisition.actions.cancel.label')}"
+                type: "postback"
+                payload:
+                  action: "nostop"
+                  variables:
+                    nostop: "no"
     transitions:
       actions:
         yescontinue: "showRequisitionPretext"
