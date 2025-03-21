@@ -8,9 +8,12 @@ context:
     selectedItem: "string"  
     selectedItemDesc: "string"  
     selectedItemPrice: "string"
+    selectedItemImage: "string"
+    quantity: "int"
     CatId: "string"
     CatName: "string"
     categoryList: "list"
+    categoryImage: "string"
     itemLists: "list"
     endpoint: "string" 
     default_waitmessage: "string"
@@ -23,7 +26,7 @@ context:
     requisitionNumber: "string"
     categoryStartIndex: "string"
     urlAvailable: "boolean"
-    requisitionUrl: "string" 
+    requisitionUrl: "string"  
     categoryIndex: "int" 
     itemIndex: "int"
     fullCategoryList: "list"
@@ -288,6 +291,7 @@ states:
               - title: "${categoryList.CategoryName}"
                 description: "Category ID: ${categoryList.CategoryId}"
                 name: "CategoryCard"
+                imageUrl: "${categoryList.CategoryImage}"
                 iteratorVariable: "categoryList"
                 actions:
                   - label: "Select"
@@ -383,40 +387,6 @@ states:
       next: "displayItemList"
       error: "showError"
 
-  # displayItemList:
-  #   component: "System.CommonResponse"
-  #   properties:
-  #     processUserMessage: true    
-  #     metadata:
-  #       responseItems:
-  #       - type: "text"
-  #         text: "Choose the items you want to order:"
-  #       - type: "cards"
-  #         cardLayout: "horizontal"
-  #         name: "ItemsCards"
-  #         cards:
-  #         - title: "${AllItems.name}"
-  #           description: "${AllItems.description} - Price: $${AllItems.price?string?default('50')}"
-  #           name: "ItemCard"
-  #           iteratorVariable: "AllItems"
-  #           rangeStart: "${procurement_cardsRangeStart}"
-  #           rangeSize: "35"
-  #           actions:
-  #           - label: "Select"
-  #             type: "postback"
-  #             keyword: "${AllItems.name?lower_case}"
-  #             payload:
-  #               action: "confirmSelection"
-  #               variables:
-  #                 selectedItem: "${AllItems.name}"
-  #                 selectedItemDesc: "${AllItems.description}"
-  #                 selectedItemPrice: "${AllItems.price?string?default('50')}"
-  #             name: "select"             
-  #   transitions:
-  #     actions:
-  #       confirmSelection: "confirmSelection"
-  #     next: "intent"
-
   displayItemList:
       component: "System.CommonResponse"
       properties:
@@ -430,19 +400,24 @@ states:
               name: "ItemsCards"
               cards:
                 - title: "${itemLists.name}"
-                  description: "${itemLists.description} - Price: $${itemLists.price?string?default('50')}"
+                  description: |-
+
+                              ${itemLists.description}
+                              Price: $${itemLists.price?string?default('50')}
                   name: "ItemCard"
+                  imageUrl: "${itemLists.image}"
                   iteratorVariable: "itemLists"
                   actions:
                     - label: "Select"
                       type: "postback"
                       keyword: "${itemLists.name?lower_case}"
                       payload:
-                        action: "confirmSelection"
+                        action: "askQuantity"
                         variables:
                           selectedItem: "${itemLists.name}"
                           selectedItemDesc: "${itemLists.description}"
                           selectedItemPrice: "${itemLists.price?string?default('50')}"
+                          selectedItemImage: "${itemLists.image}"
             - type: "text"
               text: "**Options:**\n⬅️ Click 'Previous' to go back\n➡️ Click 'Next' to see more items\n📜 Click 'Show All' to view all items"
               actions: 
@@ -460,7 +435,8 @@ states:
                     action: "showAll"
       transitions:
         actions:
-          confirmSelection: "confirmSelection"
+          # confirmSelection: "confirmSelection"
+          askQuantity: "askQuantity"
           nextPage: "getNextItem"
           previousPage: "getPreviousItem"
           showAll: "getAllItem"
@@ -498,33 +474,41 @@ states:
     transitions:
       next: "displayItemList"
 
-  # confirmSelection:
-  #   component: "System.CommonResponse"
-  #   properties:
-  #     processUserMessage: true
-  #     keepTurn: false
-  #     metadata:
-  #       responseItems:
-  #       - type: "text"
-  #         text: "You selected ${selectedItem} - ${selectedItemDesc}. Would you like to proceed to Order?"
-  #         actions:
-  #         - label: "${rb('yesLabel')}"
-  #           type: "postback"
-  #           payload:
-  #             action: "yescontinue"
-  #             variables:
-  #               yescontinue: "yes"
-  #         - label: "${rb('noLabel')}"
-  #           type: "postback"
-  #           payload:
-  #             action: "nostop"
-  #             variables:
-  #               nostop: "no"
-  #   transitions:
-  #     actions:
-  #       yescontinue: "showRequisitionPretext"
-  #       nostop: "getItemCategories"
-  #     next: "showRequisitionPretext"
+
+  # ask quantity for the item 
+  askQuantity:
+    component: "System.CommonResponse"
+    properties:
+      processUserMessage: true
+      keepTurn: false
+      variable: "quantity"
+      metadata:
+        responseItems:
+          - type: "text"
+            text: "How many units of **${selectedItem}** would you like to order? Please enter a quantity or select from below:"
+            actions:
+              - label: "1"
+                type: "postback"
+                payload:
+                  action: "setQuantity"
+                  variables:
+                    quantity: 1
+              - label: "5"
+                type: "postback"
+                payload:
+                  action: "setQuantity"
+                  variables:
+                    quantity: 5
+              - label: "10"
+                type: "postback"
+                payload:
+                  action: "setQuantity"
+                  variables:
+                    quantity: 10
+    transitions:
+      actions:
+        setQuantity: "confirmSelection"
+
 
   confirmSelection:
     component: "System.CommonResponse"
@@ -537,12 +521,13 @@ states:
           cardLayout: "vertical" 
           cards:
             - title: "${selectedItem}"
+              imageUrl: "${selectedItemImage}" 
               description: |-
 
                            ${rb('confirmRequisition.text')}
 
                            ${selectedItemDesc}
-                           ${rb('confirmRequisition.itemQuantity.text')}: 1
+                           ${rb('confirmRequisition.itemQuantity.text')}: ${quantity}
                            ${rb('cat.requester')}: ${user.username} 
               actions:
               - label: "${rb('confirmRequisition.actions.createRequisition.label')}"
@@ -557,12 +542,19 @@ states:
                   action: "nostop"
                   variables:
                     nostop: "no"
+              - label: "Change Quantity"
+                type: "postback"
+                payload:
+                  action: "changeQuantity"
+                  variables:
+                    quantity: null
     transitions:
       actions:
         yescontinue: "showRequisitionPretext"
         nostop: "getItemCategories"
+        changeQuantity: "askQuantity"
       next: "showRequisitionPretext"
-  
+
   showRequisitionPretext:
     component: "System.Output"
     properties:
@@ -655,7 +647,8 @@ states:
       selectedItem: "${selectedItem}"
       justification: "${justification}"
       selectedItemDesc: "${selectedItemDesc}"
-      selectedItemPrice: "${selectedItemPrice}" 
+      selectedItemPrice: "${selectedItemPrice}"
+      quantity: "${quantity}"
       fusionEnv: "${system.config.da.fusionType}"
       CategoryId: "${CatId}"
       CategoryName: "${CatName}"

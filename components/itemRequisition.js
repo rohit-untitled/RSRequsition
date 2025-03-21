@@ -28,6 +28,10 @@ module.exports = {
                     type: "string",
                     required: true
                 },
+                quantity: {
+                    type: "int",
+                    required: true
+                },
                 justification: {
                     type: "string",
                     required: true
@@ -57,6 +61,7 @@ module.exports = {
         var selectedItem = conversation.properties().selectedItem;
         var selectedItemDesc = conversation.properties().selectedItemDesc;
         var selectedItemPrice = conversation.properties().selectedItemPrice;
+        var quantity = conversation.properties().quantity;
         var justification = conversation.properties().justification;
         var categoryId = conversation.properties().CategoryId;
         var categoryName = conversation.properties().CategoryName;
@@ -69,6 +74,7 @@ module.exports = {
             "Fusion Env ==>" + fusionEnv,
             "Item ==>" + selectedItem,
             "Description ==>" + selectedItemDesc,
+            "Quantity ==>" + quantity,
             "Amount ==>" + selectedItemPrice,
             "Justification ==>" + justification,
             "CategoryId ==>" + categoryId,
@@ -87,7 +93,7 @@ module.exports = {
             conversation.transition("notSupported");
             done();
         }
-        callRequisitionAPIs.requisitionAPI(instanceName, userName, requestToken, fusionEnv,categoryId,categoryName, selectedItem, selectedItemDesc, selectedItemPrice, justification, conversation, done);
+        callRequisitionAPIs.requisitionAPI(instanceName, userName, requestToken, fusionEnv,categoryId,categoryName, selectedItem, selectedItemDesc, quantity, selectedItemPrice, justification, conversation, done);
     }
 
 }
